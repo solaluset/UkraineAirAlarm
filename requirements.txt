@@ -1,0 +1,4 @@
+git+https://github.com/Pycord-Development/pycord
+python-dotenv==0.20.0
+aiohttp-sse-client==0.2.1
+asyncpg==0.25.0
