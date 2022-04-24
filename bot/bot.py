@@ -1,16 +1,20 @@
 import logging
 import re
+from time import time
 from os import getenv
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-import db
-from api import API
+from . import db
+from .api import API
+from map_render import render as render_map
+
 
 load_dotenv()
-logging.basicConfig(handlers=[logging.StreamHandler()])
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 
 PLACEHOLDER = re.compile(r"%(\w+)%")
 MANDATORY = ("name", "name_en")
@@ -35,7 +39,17 @@ async def on_application_command_error(ctx, exception):
             "Цю команду не можна використовувати в приватних повідомленнях."
         )
     else:
+        print(exception)
         await ctx.respond("Сталася невідома помилка.")
+
+
+@bot.slash_command()
+async def test(ctx, channel: discord.Option(discord.TextChannel)):
+    print(
+        "Test result: ",
+        channel.permissions_for(ctx.me)
+        == (await ctx.guild.fetch_channel(channel.id)).permissions_for(ctx.me),
+    )
 
 
 @bot.slash_command(description="вивести інструкціі")
@@ -113,6 +127,15 @@ async def delete_config(ctx: discord.ApplicationContext):
     await ctx.respond("Налаштування видалено.")
 
 
+@bot.slash_command(description="показати поточну карту")
+async def map(ctx: discord.ApplicationContext):
+    await ctx.defer()
+    start = time()
+    data = await render_map()
+    logging.info(f"Rendering took {time()-start:.2f}")
+    await ctx.respond(file=discord.File(BytesIO(data), filename="map.png"))
+
+
 def format_message(text: str, data: dict):
     return PLACEHOLDER.sub(lambda m: data.get(m.group(1)), text)
 
@@ -132,5 +155,10 @@ async def send_alarm(data: dict):
         await channel.send(format_message(text, data))
 
 
-bot.loop.create_task(api.listen(send_alarm))
-bot.run(getenv("TOKEN"))
+def run():
+    bot.loop.create_task(api.listen(send_alarm))
+    bot.run(getenv("TOKEN"))
+
+
+if __name__ == "__main__":
+    run()
