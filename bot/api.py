@@ -1,6 +1,7 @@
 from json import loads
 from typing import Callable, Coroutine
 
+import requests
 from aiohttp_sse_client.client import EventSource
 
 ENDPOINT = "https://alerts.com.ua/api"
@@ -25,3 +26,11 @@ class API:
                         await callback(loads(message.data)["state"])
             except Exception as e:
                 print(e)
+
+    def get_regions(self) -> dict[str, int]:
+        return {
+            s["name"]: s["id"]
+            for s in requests.get(ENDPOINT + "/states", headers=self.headers).json()[
+                "states"
+            ]
+        }
