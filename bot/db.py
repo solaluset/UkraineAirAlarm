@@ -11,11 +11,12 @@ RowWithRegions = TypeVar(
 class ConfigStore:
     def __init__(self, *args, **kwargs):
         self.conn: asyncpg.Connection = None
-        self._coro = asyncpg.connect(*args, **kwargs)
+        self._args = args
+        self._kwargs = kwargs
 
     async def _prepare(self):
-        if not self.conn:
-            self.conn = await self._coro
+        if not self.conn or self.conn.is_closed():
+            self.conn = await asyncpg.connect(*self._args, **self._kwargs)
             await self.conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS
