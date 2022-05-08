@@ -51,6 +51,7 @@ async def on_application_command_error(ctx, exception):
 
 
 if DEBUG_GUILD:
+
     @bot.slash_command()
     async def test(ctx, channel: discord.Option(discord.TextChannel)):
         print(
@@ -66,7 +67,7 @@ async def help(ctx: discord.ApplicationContext):
     embed.add_field(name="1.", value="Додайте бота на сервер.", inline=False)
     embed.add_field(
         name="2.",
-        value="""Скористайтеся командою /configure
+        value="""Скористайтеся командою `/configure`
 Оберіть канал, в який будуть приходити повідомлення.
 Вкажіть, який текст має бути надісланий при оголошенні тривоги та її відбою.
 Використовуйте `%name%`, щоб підставити назву області в текст, або
@@ -76,9 +77,17 @@ async def help(ctx: discord.ApplicationContext):
     )
     embed.add_field(
         name="3.",
+        value="""Ви можете обмежити перелік регіонів, про тривогу в яких сповіщатиме бот.
+Для цьго скористайтеся командою `/add_region`
+За замовчуванням бот сповіщатиме про тривоги по всій території України.
+""",
+        inline=False,
+    )
+    embed.add_field(
+        name="4.",
         value="""Готово! Всі сповіщення будуть приходити в канал, що ви вказали.
-Налаштування можна перевірити за допомогою команди /show_config
-Якщо хочете відключити бота, використайте /delete_config""",
+Налаштування можна перевірити за допомогою команди `/show_config`
+Якщо хочете відключити бота, використайте `/delete_config`""",
         inline=False,
     )
     await ctx.respond(embed=embed)
@@ -114,7 +123,8 @@ async def configure(
 @commands.guild_only()
 @commands.has_permissions(manage_guild=True)
 async def add_region(
-    ctx: discord.ApplicationContext, region: discord.Option(int, choices=REGION_OPTIONS)
+    ctx: discord.ApplicationContext,
+    region: discord.Option(int, name="регіон", choices=REGION_OPTIONS),
 ):
     await ctx.defer()
     if await store.add_region(ctx.guild.id, region):
@@ -127,13 +137,14 @@ async def add_region(
 @commands.guild_only()
 @commands.has_permissions(manage_guild=True)
 async def remove_region(
-    ctx: discord.ApplicationContext, region: discord.Option(int, choices=REGION_OPTIONS)
+    ctx: discord.ApplicationContext,
+    region: discord.Option(int, name="регіон", choices=REGION_OPTIONS),
 ):
     await ctx.defer()
     if await store.remove_region(ctx.guild.id, region):
         await ctx.respond("Регіон видалено зі списку.")
     else:
-        await ctx.respond("Регіона немає в списку або бота не налаштовано.")
+        await ctx.respond("Регіону немає в списку або бота не налаштовано.")
 
 
 @bot.slash_command(description="видалити список регіонів")
@@ -156,7 +167,10 @@ async def show_config(ctx: discord.ApplicationContext):
     await ctx.respond(
         f"""Канал: <#{config[0]}>
 Текст сповіщення про тривогу: {config[1]}
-Текст сповіщення про відбій тривоги: {config[2]}""",
+Текст сповіщення про відбій тривоги: {config[2]}
+Обрані регіони: {
+    ", ".join(REGION_NAMES[i] for i in config[3]) if config[3] else "вся Україна"
+}.""",
         allowed_mentions=discord.AllowedMentions.none(),
     )
 
