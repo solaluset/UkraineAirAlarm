@@ -20,7 +20,8 @@ PLACEHOLDER = re.compile(r"%(\w+)%")
 MANDATORY = ("name", "name_en")
 
 
-bot = discord.Bot()
+DEBUG_GUILD = getenv("DEBUG_GUILD")
+bot = discord.Bot(debug_guilds=[int(DEBUG_GUILD)] if DEBUG_GUILD else None)
 api = API(getenv("API_KEY"))
 store = db.ConfigStore(getenv("DATABASE_URL"))
 
