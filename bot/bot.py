@@ -172,15 +172,39 @@ async def show_config(ctx: discord.ApplicationContext):
     if not config:
         await ctx.respond("Бота не налаштовано!")
         return
-    await ctx.respond(
+    view = ShowConfig(config[1], config[2])
+    view.message = await ctx.respond(
         f"""Канал: <#{config[0]}>
-Текст сповіщення про тривогу: {config[1]}
-Текст сповіщення про відбій тривоги: {config[2]}
 Обрані регіони: {
     ", ".join(REGION_NAMES[i] for i in config[3]) if config[3] else "вся Україна"
 }.""",
         allowed_mentions=discord.AllowedMentions.none(),
+        view=view,
     )
+
+
+class ShowConfig(discord.ui.View):
+    def __init__(self, msg1, msg2):
+        super().__init__(
+            ShowMessage("Показати сповіщення про тривогу", msg1),
+            ShowMessage("Показати сповіщення про відбій тривоги", msg2),
+            timeout=120,
+        )
+        self.message = None
+
+    async def on_timeout(self) -> None:
+        self.disable_all_items()
+        await self.message.edit(view=self)
+
+
+class ShowMessage(discord.ui.Button):
+    def __init__(self, label, msg):
+        super().__init__(style=discord.ButtonStyle.primary, label=label)
+        self.msg = msg
+
+    async def callback(self, interaction: discord.Interaction):
+        text, embed = load_template(self.msg)
+        await interaction.response.send_message(text, embed=embed, ephemeral=True)
 
 
 @bot.slash_command(description="видалити налаштування")
