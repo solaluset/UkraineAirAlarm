@@ -112,8 +112,10 @@ async def configure(
     # fix for pycord permissions issue
     # https://github.com/Pycord-Development/pycord/issues/1283
     channel = ctx.guild.get_channel(channel.id)
-    if not channel.permissions_for(ctx.guild.me).send_messages:
-        await ctx.respond("У бота немає прав писати у вказаний канал!")
+    if not channel.permissions_for(ctx.guild.me).embed_links:
+        await ctx.respond(
+            "У бота немає прав писати або вставляти посилання у вказаний канал!"
+        )
         return
     try:
         text_begin = await show_and_reserialize(ctx, text_begin)
