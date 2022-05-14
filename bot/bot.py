@@ -1,8 +1,10 @@
+import json
 import logging
 import re
 from time import time
 from os import getenv
 from io import BytesIO
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -106,17 +108,21 @@ async def configure(
         str, "текст сповіщення про відбій тривоги", name="відбій_тривоги"
     ),
 ):
-    await ctx.defer()
+    await ctx.defer(ephemeral=True)
     # fix for pycord permissions issue
     # https://github.com/Pycord-Development/pycord/issues/1283
     channel = ctx.guild.get_channel(channel.id)
     if not channel.permissions_for(ctx.guild.me).send_messages:
         await ctx.respond("У бота немає прав писати у вказаний канал!")
         return
-    await store.set(
-        ctx.guild.id, channel.id, force_name(text_begin), force_name(text_end)
-    )
-    await ctx.respond("Готово!")
+    try:
+        text_begin = await show_and_reserialize(ctx, text_begin)
+        text_end = await show_and_reserialize(ctx, text_end)
+    except discord.HTTPException:
+        await ctx.respond("Неправильно сформований ембед.")
+        return
+    await store.set(ctx.guild.id, channel.id, text_begin, text_end)
+    await ctx.respond("Налаштування завершено!")
 
 
 @bot.slash_command(description="додати регіон до списку")
@@ -197,10 +203,25 @@ def format_message(text: str, data: dict):
     return PLACEHOLDER.sub(lambda m: data.get(m.group(1)), text)
 
 
-def force_name(text: str):
-    if not any(x in MANDATORY for x in PLACEHOLDER.findall(text)):
-        return "%name%\n" + text
-    return text
+def load_template(template: str) -> tuple[str, Optional[discord.Embed]]:
+    try:
+        data = json.loads(template)
+    except json.JSONDecodeError:
+        data = None
+    if isinstance(data, dict):
+        return (
+            data.get("content", ""),
+            discord.Embed.from_dict(data["embed"]) if data.get("embed") else None,
+        )
+    return template, None
+
+
+async def show_and_reserialize(ctx, template: str):
+    text, embed = load_template(template)
+    if not any(x in MANDATORY for x in PLACEHOLDER.findall(template)):
+        text = "%name%\n" + text
+    await ctx.respond(text, embed=embed, ephemeral=True)
+    return json.dumps({"content": text, "embed": embed.to_dict() if embed else {}})
 
 
 async def send_alarm(data: dict):
@@ -209,7 +230,8 @@ async def send_alarm(data: dict):
         if not channel or not channel.permissions_for(channel.guild.me).send_messages:
             continue
         text = text_begin if data["alert"] else text_end
-        await channel.send(format_message(text, data))
+        msg, embed = load_template(format_message(text, data))
+        await channel.send(msg, embed=embed)
 
 
 def run():
