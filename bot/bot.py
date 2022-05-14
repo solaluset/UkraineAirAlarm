@@ -5,6 +5,8 @@ from time import time
 from os import getenv
 from io import BytesIO
 from typing import Optional
+from base64 import b64encode
+from urllib.request import quote as encode_for_url
 
 import discord
 from discord.ext import commands
@@ -32,6 +34,18 @@ REGION_NAMES = {v: k for k, v in REGION_IDS.items()}
 REGION_OPTIONS = tuple(
     discord.OptionChoice(name, id_) for name, id_ in REGION_IDS.items()
 )
+EXAMPLE_EMBED = b64encode(
+    json.dumps(
+        {
+            "content": "Можете використовувати",
+            "embed": {
+                "title": "%name%",
+                "color": 14616327,
+                "description": "будь-який текст",
+            },
+        }
+    ).encode()
+).decode()
 
 
 @bot.event
@@ -67,11 +81,19 @@ if DEBUG_GUILD:
 async def help(ctx: discord.ApplicationContext):
     embed = discord.Embed(title="Допомога", description="Як користуватися ботом?")
     embed.add_field(name="1.", value="Додайте бота на сервер.", inline=False)
+    url = "https://glitchii.github.io/embedbuilder/?" + "&".join(
+        (
+            f"data={EXAMPLE_EMBED}",
+            f"username={encode_for_url(bot.user.name)}",
+            f"avatar={bot.user.display_avatar}",
+        )
+    )
     embed.add_field(
         name="2.",
-        value="""Скористайтеся командою `/configure`
+        value=f"""Скористайтеся командою `/configure`
 Оберіть канал, в який будуть приходити повідомлення.
-Вкажіть, який текст має бути надісланий при оголошенні тривоги та її відбою.
+Вкажіть, що має бути надіслано при оголошенні тривоги та її відбою.
+Можна використовувати звичайний текст або [створити ембед]({url}).
 Використовуйте `%name%`, щоб підставити назву області в текст, або
 `%name_en%` для назви англійською.
 """,
