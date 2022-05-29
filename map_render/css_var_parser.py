@@ -36,7 +36,7 @@ class Transformer:
         while isinstance(token, FunctionBlock) and token.name == "var":
             try:
                 token = self.vars[token.arguments[0].value]
-            except KeyError:
+            except (KeyError, IndexError):
                 break
         return token
 
