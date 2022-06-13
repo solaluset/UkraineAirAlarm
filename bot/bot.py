@@ -99,7 +99,7 @@ async def help(ctx: discord.ApplicationContext):
 Можна використовувати звичайний текст або [створити ембед]({url}).
 Використовуйте `%name%`, щоб підставити назву області в текст, або
 `%name_en%` для назви англійською.
-Замість `%image%` буде підставлено посилання на поточну карту.
+Замість `%map%` буде підставлено посилання на поточну карту.
 """,
         inline=False,
     )
@@ -269,7 +269,7 @@ def load_template(template: str) -> tuple[str, Optional[discord.Embed]]:
 
 
 async def show_and_reserialize(ctx, template: str):
-    text, embed = load_template(format_message(template, {"image": DEFAULT_IMAGE_URL}))
+    text, embed = load_template(format_message(template, {"map": DEFAULT_IMAGE_URL}))
     if not any(x in MANDATORY for x in PLACEHOLDER.findall(template)):
         text = "%name%\n" + text
     await ctx.respond(text, embed=embed, ephemeral=True)
@@ -279,7 +279,7 @@ async def show_and_reserialize(ctx, template: str):
 
 async def send_alarm(data: dict):
     pending_updates: list[tuple[discord.Message, str]] = []
-    data["image"] = DEFAULT_IMAGE_URL
+    data["map"] = DEFAULT_IMAGE_URL
     for channel_id, text_begin, text_end in await store.get_for(data["id"]):
         channel = bot.get_channel(channel_id)
         if not channel or not channel.permissions_for(channel.guild.me).send_messages:
@@ -287,12 +287,12 @@ async def send_alarm(data: dict):
         text = text_begin if data["alert"] else text_end
         msg, embed = load_template(format_message(text, data))
         message = await channel.send(msg, embed=embed)
-        if "%image%" in text:
+        if "%map%" in text:
             pending_updates.append((message, text))
 
     async def update_pending():
         image = await render_map()
-        data["image"] = (await bot.loop.run_in_executor(None, upload_image, image)).url
+        data["map"] = (await bot.loop.run_in_executor(None, upload_image, image)).url
         for message, text in pending_updates:
             msg, embed = load_template(format_message(text, data))
             await message.edit(content=msg, embed=embed)
