@@ -47,7 +47,7 @@ def prepare(driver: Chrome):
     for file in driver.find_elements(By.TAG_NAME, "link"):
         href = file.get_attribute("href")
         if file.get_attribute("rel") == "stylesheet" and href.startswith(URL):
-            css += parse(get(href).text, ["light"])
+            css += parse(get(href).text, ["light", "contrast"])
     _css = "<style>" + css + "</style>"
     return _map, _css
 
