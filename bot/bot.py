@@ -229,7 +229,7 @@ class ShowMessage(discord.ui.Button):
         self.msg = msg
 
     async def callback(self, interaction: discord.Interaction):
-        text, embed = load_template(self.msg)
+        text, embed = load_template(format_message(self.msg, {"map": DEFAULT_IMAGE_URL}, True))
         await interaction.response.send_message(text, embed=embed, ephemeral=True)
 
 
@@ -251,8 +251,8 @@ async def map(ctx: discord.ApplicationContext):
     await ctx.respond(file=discord.File(BytesIO(data), filename="map.png"))
 
 
-def format_message(text: str, data: dict):
-    return PLACEHOLDER.sub(lambda m: data.get(m.group(1)), text)
+def format_message(text: str, data: dict, strict=False):
+    return PLACEHOLDER.sub(lambda m: data.get(m.group(1), m.group() if strict else None), text)
 
 
 def load_template(template: str) -> tuple[str, Optional[discord.Embed]]:
@@ -269,12 +269,14 @@ def load_template(template: str) -> tuple[str, Optional[discord.Embed]]:
 
 
 async def show_and_reserialize(ctx, template: str):
-    text, embed = load_template(format_message(template, {"map": DEFAULT_IMAGE_URL}))
+    text, embed = load_template(format_message(template, {"map": DEFAULT_IMAGE_URL}, True))
     if not any(x in MANDATORY for x in PLACEHOLDER.findall(template)):
-        text = "%name%\n" + text
-    await ctx.respond(text, embed=embed, ephemeral=True)
+        add = "%name%\n"
+    else:
+        add = ""
+    await ctx.respond(add + text, embed=embed, ephemeral=True)
     text, embed = load_template(template)
-    return json.dumps({"content": text, "embed": embed.to_dict() if embed else {}})
+    return json.dumps({"content": add + text, "embed": embed.to_dict() if embed else {}})
 
 
 async def send_alarm(data: dict):
