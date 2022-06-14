@@ -27,8 +27,12 @@ def prepare(driver: Chrome):
     if _map:
         try:
             driver.find_element(By.LINK_TEXT, "Оновити").click()
+            sleep(1)
         except NoSuchElementException:
-            print("Couldn't refresh map.")
+            print("Refreshing map forcefully...")
+            _map = None
+            driver.refresh()
+            return prepare(driver)
         return _map, _css
 
     while True:
