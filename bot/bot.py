@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import asyncio
 from time import time
 from os import getenv
 from io import BytesIO
@@ -301,6 +302,7 @@ async def send_alarm(data: dict):
             pending_updates.append((message, text))
 
     async def update_pending():
+        await asyncio.sleep(2)
         image = await render_map()
         data["map"] = (
             (
