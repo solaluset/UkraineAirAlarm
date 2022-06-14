@@ -10,7 +10,6 @@ from urllib.request import quote as encode_for_url
 
 import discord
 from discord.ext import commands
-from cloudinary.uploader import upload_image
 from dotenv import load_dotenv
 
 from . import db
@@ -47,7 +46,8 @@ EXAMPLE_EMBED = b64encode(
         }
     ).encode()
 ).decode()
-DEFAULT_IMAGE_URL = "https://res.cloudinary.com/alarm-map/image/upload/v1655127823/opltbx5ak8uohpzxazd4.png"
+DEFAULT_IMAGE_URL = "https://media.discordapp.net/attachments/986235489508028506/986235602661965884/loading.png"
+STORAGE_CHANNEL = int(getenv("STORAGE_CHANNEL"))
 
 
 @bot.event
@@ -229,7 +229,9 @@ class ShowMessage(discord.ui.Button):
         self.msg = msg
 
     async def callback(self, interaction: discord.Interaction):
-        text, embed = load_template(format_message(self.msg, {"map": DEFAULT_IMAGE_URL}, True))
+        text, embed = load_template(
+            format_message(self.msg, {"map": DEFAULT_IMAGE_URL}, True)
+        )
         await interaction.response.send_message(text, embed=embed, ephemeral=True)
 
 
@@ -252,7 +254,9 @@ async def map(ctx: discord.ApplicationContext):
 
 
 def format_message(text: str, data: dict, strict=False):
-    return PLACEHOLDER.sub(lambda m: data.get(m.group(1), m.group() if strict else None), text)
+    return PLACEHOLDER.sub(
+        lambda m: data.get(m.group(1), m.group() if strict else None), text
+    )
 
 
 def load_template(template: str) -> tuple[str, Optional[discord.Embed]]:
@@ -269,14 +273,18 @@ def load_template(template: str) -> tuple[str, Optional[discord.Embed]]:
 
 
 async def show_and_reserialize(ctx, template: str):
-    text, embed = load_template(format_message(template, {"map": DEFAULT_IMAGE_URL}, True))
+    text, embed = load_template(
+        format_message(template, {"map": DEFAULT_IMAGE_URL}, True)
+    )
     if not any(x in MANDATORY for x in PLACEHOLDER.findall(template)):
         add = "%name%\n"
     else:
         add = ""
     await ctx.respond(add + text, embed=embed, ephemeral=True)
     text, embed = load_template(template)
-    return json.dumps({"content": add + text, "embed": embed.to_dict() if embed else {}})
+    return json.dumps(
+        {"content": add + text, "embed": embed.to_dict() if embed else {}}
+    )
 
 
 async def send_alarm(data: dict):
@@ -294,7 +302,15 @@ async def send_alarm(data: dict):
 
     async def update_pending():
         image = await render_map()
-        data["map"] = (await bot.loop.run_in_executor(None, upload_image, image)).url
+        data["map"] = (
+            (
+                await bot.get_channel(STORAGE_CHANNEL).send(
+                    file=discord.File(BytesIO(image), filename="map.png")
+                )
+            )
+            .attachments[0]
+            .url
+        )
         for message, text in pending_updates:
             msg, embed = load_template(format_message(text, data))
             await message.edit(content=msg, embed=embed)
