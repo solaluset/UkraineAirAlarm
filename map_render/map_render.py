@@ -1,4 +1,4 @@
-from time import sleep
+﻿from time import sleep
 
 from requests import get
 from cairosvg import svg2png
@@ -53,7 +53,7 @@ def prepare(driver: Chrome):
         href = file.get_attribute("href")
         if file.get_attribute("rel") == "stylesheet" and href.startswith(URL):
             css += parse(get(href).text, ["light", "contrast"])
-    _css = BeautifulSoup("<defs><style>" + css + "</style></defs>", "html.parser")
+    _css = "<style>" + css + "</style>"
     return _map, _css
 
 
@@ -65,12 +65,13 @@ def get_img():
         return _last_value
     _last_data = data
 
+    css_soup = BeautifulSoup("<defs>" + css + "</defs>", "html.parser")
     soup = BeautifulSoup(data, "html.parser")
     svg = soup.find("svg")
     if svg.defs:
-        svg.defs.replace_with(css.defs)
+        svg.defs.replace_with(css_soup)
     else:
-        svg.append(css.defs)
+        svg.append(css_soup)
     width, height = svg["viewbox"].split()[2:]
     svg["width"] = width
     svg["height"] = height
