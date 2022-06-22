@@ -2,6 +2,7 @@ from time import sleep
 
 from requests import get
 from cairosvg import svg2png
+from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -17,7 +18,7 @@ options.headless = True
 driver = Chrome(options=options)
 driver.get(URL)
 _map = None
-_css = ""
+_css = None
 _last_data = ""
 _last_value = None
 
@@ -52,27 +53,29 @@ def prepare(driver: Chrome):
         href = file.get_attribute("href")
         if file.get_attribute("rel") == "stylesheet" and href.startswith(URL):
             css += parse(get(href).text, ["light", "contrast"])
-    _css = "<style>" + css + "</style>"
+    _css = BeautifulSoup("<defs><style>" + css + "</style></defs>", "html.parser")
     return _map, _css
 
 
 def get_img():
     global _last_data, _last_value
     elem, css = prepare(driver)
-    data = elem.get_attribute("innerHTML")
+    data = elem.get_attribute("outerHTML")
     if data == _last_data:
         return _last_value
     _last_data = data
-    data = (
-        elem.get_attribute("outerHTML").replace(data, "").replace("</svg>", "")
-        + "<defs>"
-        + css
-        + "</defs>"
-        + data
-        + "</svg>"
-    )
 
-    _last_value = svg2png(data)
+    soup = BeautifulSoup(data, "html.parser")
+    svg = soup.find("svg")
+    if svg.defs:
+        svg.defs.replace_with(css)
+    else:
+        svg.extend(css)
+    width, height = svg["viewbox"].split()[2:]
+    svg["width"] = width
+    svg["height"] = height
+
+    _last_value = svg2png(str(soup))
     return _last_value
 
 
