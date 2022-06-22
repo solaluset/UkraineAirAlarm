@@ -68,9 +68,9 @@ def get_img():
     soup = BeautifulSoup(data, "html.parser")
     svg = soup.find("svg")
     if svg.defs:
-        svg.defs.replace_with(css)
+        svg.defs.replace_with(css.defs)
     else:
-        svg.extend(css)
+        svg.append(css.defs)
     width, height = svg["viewbox"].split()[2:]
     svg["width"] = width
     svg["height"] = height
