@@ -266,9 +266,10 @@ def load_template(template: str) -> tuple[str, Optional[discord.Embed]]:
     except json.JSONDecodeError:
         data = None
     if isinstance(data, dict):
+        embed = data.get("embed") or (data["embeds"][0] if data.get("embeds") else None)
         return (
             data.get("content", ""),
-            discord.Embed.from_dict(data["embed"]) if data.get("embed") else None,
+            discord.Embed.from_dict(embed) if embed else None,
         )
     return template, None
 
