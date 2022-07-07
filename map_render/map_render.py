@@ -1,4 +1,4 @@
-﻿from time import sleep
+from time import sleep
 
 from requests import get
 from cairosvg import svg2png
@@ -27,7 +27,7 @@ def prepare(driver: Chrome):
     global _map, _css
     if _map:
         try:
-            driver.find_element(By.LINK_TEXT, "Оновити").click()
+            driver.find_element(By.LINK_TEXT, "Оновити зараз").click()
             sleep(1)
         except NoSuchElementException:
             print("Refreshing map forcefully...")
