@@ -4,7 +4,7 @@ import re
 import asyncio
 from time import time
 from os import getenv
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Optional
 from base64 import b64encode
 from urllib.request import quote as encode_for_url
@@ -249,9 +249,11 @@ async def delete_config(ctx: discord.ApplicationContext):
 async def map(ctx: discord.ApplicationContext):
     await ctx.defer()
     start = time()
-    data = await render_map()
+    code, data = await render_map()
     logging.info(f"Rendering took {time()-start:.2f}")
     await ctx.respond(file=discord.File(BytesIO(data), filename="map.png"))
+    if code:
+        await ctx.bot.get_channel(STORAGE_CHANNEL).send(file=discord.File(StringIO(code), filename="map.svg"))
 
 
 def format_message(text: str, data: dict, strict=False):
@@ -304,11 +306,14 @@ async def send_alarm(data: dict):
 
     async def update_pending():
         await asyncio.sleep(2)
-        image = await render_map()
+        code, image = await render_map()
+        files = [discord.File(BytesIO(image), filename="map.png")]
+        if code:
+            files.append(discord.File(StringIO(code), filename="map.svg"))
         data["map"] = (
             (
                 await bot.get_channel(STORAGE_CHANNEL).send(
-                    file=discord.File(BytesIO(image), filename="map.png")
+                    files=files
                 )
             )
             .attachments[0]

@@ -62,7 +62,7 @@ def get_img():
     elem, css = prepare(driver)
     data = elem.get_attribute("outerHTML")
     if data == _last_data:
-        return _last_value
+        return "", _last_value
     _last_data = data
 
     css_soup = BeautifulSoup("<defs>" + css + "</defs>", "html.parser")
@@ -76,8 +76,9 @@ def get_img():
     svg["width"] = width
     svg["height"] = height
 
-    _last_value = svg2png(str(soup))
-    return _last_value
+    soup = str(soup)
+    _last_value = svg2png(soup)
+    return soup, _last_value
 
 
 if __name__ == "__main__":
