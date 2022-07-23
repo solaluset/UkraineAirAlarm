@@ -77,7 +77,10 @@ def get_img():
     svg["height"] = height
 
     soup = str(soup)
-    _last_value = svg2png(soup)
+    try:
+        _last_value = svg2png(soup)
+    except Exception:
+        return soup, None
     return soup, _last_value
 
 

@@ -251,9 +251,13 @@ async def map(ctx: discord.ApplicationContext):
     start = time()
     code, data = await render_map()
     logging.info(f"Rendering took {time()-start:.2f}")
-    await ctx.respond(file=discord.File(BytesIO(data), filename="map.png"))
     if code:
-        await ctx.bot.get_channel(STORAGE_CHANNEL).send(file=discord.File(StringIO(code), filename="map.svg"))
+        await ctx.bot.get_channel(STORAGE_CHANNEL).send(
+            file=discord.File(StringIO(code), filename="map.svg")
+        )
+    if not data:
+        raise ValueError()
+    await ctx.respond(file=discord.File(BytesIO(data), filename="map.png"))
 
 
 def format_message(text: str, data: dict, strict=False):
@@ -307,17 +311,15 @@ async def send_alarm(data: dict):
     async def update_pending():
         await asyncio.sleep(2)
         code, image = await render_map()
-        files = [discord.File(BytesIO(image), filename="map.png")]
-        if code:
-            files.append(discord.File(StringIO(code), filename="map.svg"))
-        data["map"] = (
-            (
+        if not image:
+            if code:
                 await bot.get_channel(STORAGE_CHANNEL).send(
-                    files=files
+                    file=discord.File(StringIO(code), filename="map.svg")
                 )
-            )
-            .attachments[0]
-            .url
+            return
+        file = discord.File(BytesIO(image), filename="map.png")
+        data["map"] = (
+            (await bot.get_channel(STORAGE_CHANNEL).send(file=file)).attachments[0].url
         )
         for message, text in pending_updates:
             msg, embed = load_template(format_message(text, data))
