@@ -1,5 +1,7 @@
-from time import sleep
+﻿from time import sleep
 
+import os
+import sys
 from requests import get
 from cairosvg import svg2png
 from bs4 import BeautifulSoup
@@ -8,7 +10,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
-from .css_var_parser import parse
+sys.path.append(os.path.dirname(__file__))
+from css_var_parser import parse
 
 
 URL = "https://alerts.in.ua/"
