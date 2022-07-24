@@ -76,11 +76,16 @@ def get_img():
     svg["width"] = width
     svg["height"] = height
 
+    for img in soup.find_all("image"):
+        if not img["href"].startswith("http"):
+            img["href"] = URL + img["href"]
+
     soup = str(soup)
     try:
         _last_value = svg2png(soup)
-    except Exception:
-        return soup, None
+    except Exception as e:
+        print(e)
+        _last_value = None
     return soup, _last_value
 
 
@@ -88,4 +93,4 @@ if __name__ == "__main__":
     from PIL import Image
     from io import BytesIO
 
-    Image.open(BytesIO(get_img())).show()
+    Image.open(BytesIO(get_img()[1])).show()
