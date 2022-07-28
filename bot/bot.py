@@ -249,11 +249,14 @@ async def delete_config(ctx: discord.ApplicationContext):
 async def map(ctx: discord.ApplicationContext):
     await ctx.defer()
     start = time()
-    data, error = await render_map()
+    code, data = await render_map()
     logging.info(f"Rendering took {time()-start:.2f}")
+    if code:
+        await ctx.bot.get_channel(STORAGE_CHANNEL).send(
+            file=discord.File(StringIO(code), filename="map.svg")
+        )
     if not data:
-        await send_error(error)
-        raise RuntimeError()
+        raise ValueError()
     await ctx.respond(file=discord.File(BytesIO(data), filename="map.png"))
 
 
@@ -292,12 +295,6 @@ async def show_and_reserialize(ctx, template: str):
     )
 
 
-async def send_error(e: str):
-    await bot.get_channel(STORAGE_CHANNEL).send(
-        file=discord.File(StringIO(e), filename="error.txt")
-    )
-
-
 async def send_alarm(data: dict):
     pending_updates: list[tuple[discord.Message, str]] = []
     data["map"] = DEFAULT_IMAGE_URL
@@ -313,9 +310,12 @@ async def send_alarm(data: dict):
 
     async def update_pending():
         await asyncio.sleep(2)
-        image, error = await render_map()
+        code, image = await render_map()
         if not image:
-            await send_error(error)
+            if code:
+                await bot.get_channel(STORAGE_CHANNEL).send(
+                    file=discord.File(StringIO(code), filename="map.svg")
+                )
             return
         file = discord.File(BytesIO(image), filename="map.png")
         data["map"] = (
