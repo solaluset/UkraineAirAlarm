@@ -1,4 +1,4 @@
-﻿from io import StringIO
+from io import StringIO
 from traceback import print_exc
 from typing import Union, Tuple
 
@@ -11,6 +11,7 @@ URL = "https://alerts.in.ua/"
 
 options = Options()
 options.headless = True
+options.add_argument("--disable-dev-shm-usage")
 driver = Chrome(options=options)
 driver.implicitly_wait(10)
 driver.get(URL)
@@ -49,4 +50,8 @@ if __name__ == "__main__":
     from PIL import Image
     from io import BytesIO
 
-    Image.open(BytesIO(get_img()[0])).show()
+    img, error = get_img()
+    if img:
+        Image.open(BytesIO(img)).show()
+    else:
+        print(error)
