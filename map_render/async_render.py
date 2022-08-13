@@ -2,17 +2,16 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 
 
-def _render():
+def _render(wait_for_new):
     from .map_render import get_img
 
-    return get_img()
+    return get_img(wait_for_new)
 
 
-_executor = None
+_executor = ProcessPoolExecutor(1)
 
 
-async def render():
-    global _executor
-    if not _executor:
-        _executor = ProcessPoolExecutor(1)
-    return await asyncio.get_running_loop().run_in_executor(_executor, _render)
+async def render(wait_for_new=False):
+    return await asyncio.get_running_loop().run_in_executor(
+        _executor, _render, wait_for_new
+    )
