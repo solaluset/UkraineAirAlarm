@@ -5,6 +5,8 @@ from typing import Union, Tuple
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 
 URL = "https://alerts.in.ua/"
@@ -13,7 +15,6 @@ options = Options()
 options.headless = True
 options.add_argument("--disable-dev-shm-usage")
 driver = Chrome(options=options)
-driver.implicitly_wait(10)
 driver.get(URL)
 
 _map = None
@@ -22,9 +23,23 @@ _map = None
 def get_map(driver: Chrome):
     global _map
     if _map:
+        try:
+            reload = driver.find_element(By.LINK_TEXT, "перезавантажити сторінку")
+        except NoSuchElementException:
+            pass
+        else:
+            _map = None
+            reload.click()
+            return get_map(driver)
         return _map
 
-    _map = driver.find_element(By.TAG_NAME, "svg")
+    try:
+        _map = WebDriverWait(driver, 10).until(
+            lambda _: driver.find_element(By.TAG_NAME, "svg")
+        )
+    except TimeoutException:
+        driver.refresh()
+        raise
 
     driver.execute_script(
         "document.getElementsByTagName('html')[0]"
