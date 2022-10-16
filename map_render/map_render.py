@@ -18,7 +18,6 @@ driver = Chrome(options=options)
 driver.get(URL)
 
 _map = None
-_last_screenshot = None
 
 
 def get_map(driver: Chrome):
@@ -53,19 +52,8 @@ def get_map(driver: Chrome):
     return _map
 
 
-def new_screenshot(driver):
-    global _last_screenshot
-    screenshot = get_map(driver).screenshot_as_png
-    if screenshot != _last_screenshot:
-        _last_screenshot = screenshot
-        return screenshot
-    return False
-
-
-def get_img(wait_for_new=False) -> Union[Tuple[bytes, None], Tuple[None, str]]:
+def get_img() -> Union[Tuple[bytes, None], Tuple[None, str]]:
     try:
-        if wait_for_new:
-            return WebDriverWait(driver, 60, 5).until(new_screenshot), None
         return get_map(driver).screenshot_as_png, None
     except Exception:
         f = StringIO()

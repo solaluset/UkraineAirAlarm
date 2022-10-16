@@ -312,7 +312,8 @@ async def send_alarm(data: dict):
             pending_updates.append((message, text))
 
     async def update_pending():
-        image, error = await render_map(True)
+        await asyncio.sleep(2)
+        image, error = await render_map()
         if not image:
             await send_error(error)
             return
