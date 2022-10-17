@@ -303,10 +303,15 @@ async def send_alarm(data: dict):
     data["map"] = DEFAULT_IMAGE_URL
     for channel_id, text_begin, text_end in await store.get_for(data["id"]):
         channel = bot.get_channel(channel_id)
-        if not channel or not channel.permissions_for(channel.guild.me).send_messages:
+        if (
+            not channel
+            or not (perms := channel.permissions_for(channel.guild.me)).send_messages
+        ):
             continue
         text = text_begin if data["alert"] else text_end
         msg, embed = load_template(format_message(text, data))
+        if not msg and embed and not perms.embed_links:
+            continue
         message = await channel.send(msg, embed=embed)
         if "%map%" in text:
             pending_updates.append((message, text))
