@@ -305,6 +305,7 @@ async def send_alarm(data: dict):
         channel = bot.get_channel(channel_id)
         if (
             not channel
+            or channel.guild.me.timed_out
             or not (perms := channel.permissions_for(channel.guild.me)).send_messages
         ):
             continue
