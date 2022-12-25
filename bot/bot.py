@@ -30,7 +30,11 @@ bot = discord.Bot(debug_guilds=[int(DEBUG_GUILD)] if DEBUG_GUILD else None)
 api = API(getenv("API_KEY"))
 store = db.ConfigStore(getenv("DATABASE_URL"))
 
-REGION_IDS = api.get_regions()
+REGION_IDS = {}
+try:
+    REGION_IDS = api.get_regions()
+except Exception as e:
+    print(e)
 REGION_NAMES = {v: k for k, v in REGION_IDS.items()}
 REGION_OPTIONS = tuple(
     discord.OptionChoice(name, id_) for name, id_ in REGION_IDS.items()
