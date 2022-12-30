@@ -139,7 +139,7 @@ async def configure(
         str, "текст сповіщення про відбій тривоги", name="відбій_тривоги"
     ),
 ):
-    await ctx.defer(ephemeral=True)
+    await ctx.respond("Налаштування...")
     # fix for pycord permissions issue
     # https://github.com/Pycord-Development/pycord/issues/1283
     channel = ctx.guild.get_channel(channel.id)
