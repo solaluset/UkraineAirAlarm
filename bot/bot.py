@@ -333,6 +333,7 @@ async def send_alarm(data: dict):
     async def update_pending(repeat: bool):
         global last_map_time
 
+        last_map_time = time.monotonic()
         image, error = await render_map()
         if not image:
             await send_error(error)
@@ -345,7 +346,6 @@ async def send_alarm(data: dict):
             msg, embed = load_template(format_message(text, data))
             await message.edit(content=msg, embed=embed)
 
-        last_map_time = time.monotonic()
         if not repeat:
             return
         await asyncio.sleep(30)
