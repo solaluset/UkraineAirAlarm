@@ -56,6 +56,8 @@ EXAMPLE_EMBED = b64encode(
 DEFAULT_IMAGE_URL = "https://media.discordapp.net/attachments/986235489508028506/986235602661965884/loading.png"
 STORAGE_CHANNEL = int(getenv("STORAGE_CHANNEL"))
 
+last_map_time = 0
+
 
 @bot.event
 async def on_ready():
@@ -323,8 +325,9 @@ async def send_alarm(data: dict):
         if "%map%" in text:
             pending_updates.append((message, text))
 
-    async def update_pending():
-        await asyncio.sleep(2)
+    async def update_pending(repeat: bool):
+        global last_map_time
+
         image, error = await render_map()
         if not image:
             await send_error(error)
@@ -337,7 +340,14 @@ async def send_alarm(data: dict):
             msg, embed = load_template(format_message(text, data))
             await message.edit(content=msg, embed=embed)
 
-    bot.loop.create_task(update_pending())
+        last_map_time = time.monotonic()
+        if not repeat:
+            return
+        await asyncio.sleep(30)
+        if time.monotonic() - last_map_time >= 30:
+            await update_pending(False)
+
+    bot.loop.create_task(update_pending(True))
 
 
 def run():
