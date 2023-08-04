@@ -50,8 +50,8 @@ EXAMPLE_EMBED = b64encode(
                     "description": "будь-який текст",
                 },
             }
-        ).encode()
-    )
+        )
+    ).encode()
 ).decode()
 DEFAULT_IMAGE_URL = "https://media.discordapp.net/attachments/986235489508028506/986235602661965884/loading.png"
 STORAGE_CHANNEL = int(getenv("STORAGE_CHANNEL"))
