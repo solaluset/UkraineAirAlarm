@@ -19,7 +19,7 @@ from map_render import render as render_map
 
 
 load_dotenv()
-logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+logging.basicConfig(level=logging.WARN, handlers=[logging.StreamHandler()])
 
 PLACEHOLDER = re.compile(r"%(\w+)%")
 MANDATORY = ("name", "name_en")
