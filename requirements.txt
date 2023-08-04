@@ -3,4 +3,4 @@ python-dotenv==1.0.0
 aiohttp-sse-client==0.2.1
 asyncpg==0.28.0
 selenium==4.11.2
-requests==2.27.1
+requests==2.31.0
