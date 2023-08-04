@@ -19,7 +19,7 @@ from map_render import render as render_map
 
 
 load_dotenv()
-logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+logging.basicConfig(level=logging.WARN, handlers=[logging.StreamHandler()])
 
 PLACEHOLDER = re.compile(r"%(\w+)%")
 MANDATORY = ("name", "name_en")
@@ -40,19 +40,23 @@ REGION_OPTIONS = tuple(
     discord.OptionChoice(name, id_) for name, id_ in REGION_IDS.items()
 )
 EXAMPLE_EMBED = b64encode(
-    json.dumps(
-        {
-            "content": "Можете використовувати",
-            "embed": {
-                "title": "%name%",
-                "color": 14616327,
-                "description": "будь-який текст",
-            },
-        }
+    encode_for_url(
+        json.dumps(
+            {
+                "content": "Можете використовувати",
+                "embed": {
+                    "title": "%name%",
+                    "color": 14616327,
+                    "description": "будь-який текст",
+                },
+            }
+        )
     ).encode()
 ).decode()
 DEFAULT_IMAGE_URL = "https://media.discordapp.net/attachments/986235489508028506/986235602661965884/loading.png"
 STORAGE_CHANNEL = int(getenv("STORAGE_CHANNEL"))
+
+last_map_time = 0
 
 
 @bot.event
@@ -98,10 +102,10 @@ async def help(ctx: discord.ApplicationContext):
     )
     embed.add_field(
         name="2.",
-        value=f"""Скористайтеся командою `/configure`
+        value="""Скористайтеся командою `/configure`
 Оберіть канал, в який будуть приходити повідомлення.
 Вкажіть, що має бути надіслано при оголошенні тривоги та її відбою.
-Можна використовувати звичайний текст або [створити ембед]({url}).
+Можна використовувати звичайний текст або створити ембед (див. пункт 5).
 Використовуйте `%name%`, щоб підставити назву області в текст, або
 `%name_en%` для назви англійською.
 Замість `%map%` буде підставлено посилання на поточну карту.
@@ -121,6 +125,11 @@ async def help(ctx: discord.ApplicationContext):
         value="""Готово! Всі сповіщення будуть приходити в канал, що ви вказали.
 Налаштування можна перевірити за допомогою команди `/show_config`
 Якщо хочете відключити бота, використайте `/delete_config`""",
+        inline=False,
+    )
+    embed.add_field(
+        name="5.",
+        value=f"Посилання на embed builder: [клік]({url})",
         inline=False,
     )
     await ctx.respond(embed=embed)
@@ -321,8 +330,10 @@ async def send_alarm(data: dict):
         if "%map%" in text:
             pending_updates.append((message, text))
 
-    async def update_pending():
-        await asyncio.sleep(2)
+    async def update_pending(repeat: bool):
+        global last_map_time
+
+        last_map_time = time.monotonic()
         image, error = await render_map()
         if not image:
             await send_error(error)
@@ -335,7 +346,13 @@ async def send_alarm(data: dict):
             msg, embed = load_template(format_message(text, data))
             await message.edit(content=msg, embed=embed)
 
-    bot.loop.create_task(update_pending())
+        if not repeat:
+            return
+        await asyncio.sleep(30)
+        if time.monotonic() - last_map_time >= 30:
+            await update_pending(False)
+
+    bot.loop.create_task(update_pending(True))
 
 
 def run():
