@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import asyncio
-from time import time
+from time import time, monotonic as monotonic_time
 from os import getenv
 from io import BytesIO, StringIO
 from typing import Optional
@@ -333,7 +333,7 @@ async def send_alarm(data: dict):
     async def update_pending(repeat: bool):
         global last_map_time
 
-        last_map_time = time.monotonic()
+        last_map_time = monotonic_time()
         image, error = await render_map()
         if not image:
             await send_error(error)
@@ -349,7 +349,7 @@ async def send_alarm(data: dict):
         if not repeat:
             return
         await asyncio.sleep(30)
-        if time.monotonic() - last_map_time >= 30:
+        if monotonic_time() - last_map_time >= 30:
             await update_pending(False)
 
     bot.loop.create_task(update_pending(True))
