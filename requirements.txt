@@ -1,5 +1,5 @@
 py-cord==2.4.1
-python-dotenv==0.20.0
+python-dotenv==1.0.0
 aiohttp-sse-client==0.2.1
 asyncpg==0.28.0
 selenium==4.1.3
