@@ -40,16 +40,18 @@ REGION_OPTIONS = tuple(
     discord.OptionChoice(name, id_) for name, id_ in REGION_IDS.items()
 )
 EXAMPLE_EMBED = b64encode(
-    json.dumps(
-        {
-            "content": "Можете використовувати",
-            "embed": {
-                "title": "%name%",
-                "color": 14616327,
-                "description": "будь-який текст",
-            },
-        }
-    ).encode()
+    encode_for_url(
+        json.dumps(
+            {
+                "content": "Можете використовувати",
+                "embed": {
+                    "title": "%name%",
+                    "color": 14616327,
+                    "description": "будь-який текст",
+                },
+            }
+        ).encode()
+    )
 ).decode()
 DEFAULT_IMAGE_URL = "https://media.discordapp.net/attachments/986235489508028506/986235602661965884/loading.png"
 STORAGE_CHANNEL = int(getenv("STORAGE_CHANNEL"))
