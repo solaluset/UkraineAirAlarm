@@ -5,7 +5,7 @@ import asyncio
 from time import time, monotonic as monotonic_time
 from os import getenv
 from io import BytesIO, StringIO
-from typing import Optional
+from typing import Optional, Awaitable
 from base64 import b64encode
 from urllib.request import quote as encode_for_url
 
@@ -312,6 +312,7 @@ async def send_error(e: str):
 
 
 async def send_alarm(data: dict):
+    pending_messages: list[tuple[Awaitable[discord.Message], str]] = []
     pending_updates: list[tuple[discord.Message, str]] = []
     data["map"] = DEFAULT_IMAGE_URL
     for channel_id, text_begin, text_end in await store.get_for(data["id"]):
@@ -326,7 +327,13 @@ async def send_alarm(data: dict):
         msg, embed = load_template(format_message(text, data))
         if not msg and embed and not perms.embed_links:
             continue
-        message = await channel.send(msg, embed=embed)
+        coro = channel.send(msg, embed=embed)
+        pending_messages.append((coro, text))
+
+    for i, message in enumerate(
+        await asyncio.gather(*(coro for coro, _ in pending_messages))
+    ):
+        text = pending_messages[i][1]
         if "%map%" in text:
             pending_updates.append((message, text))
 
@@ -342,9 +349,12 @@ async def send_alarm(data: dict):
         data["map"] = (
             (await bot.get_channel(STORAGE_CHANNEL).send(file=file)).attachments[0].url
         )
+
+        tasks = []
         for message, text in pending_updates:
             msg, embed = load_template(format_message(text, data))
-            await message.edit(content=msg, embed=embed)
+            tasks.append(message.edit(content=msg, embed=embed))
+        await asyncio.gather(*tasks)
 
         if not repeat:
             return
