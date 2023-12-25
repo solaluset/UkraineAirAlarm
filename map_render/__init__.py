@@ -1,3 +1,3 @@
-from .async_render import render
+__all__ = ("render",)
 
-__all__ = (render,)
+from .async_render import render
