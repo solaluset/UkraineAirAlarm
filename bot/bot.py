@@ -77,17 +77,6 @@ async def on_application_command_error(ctx, exception):
         await ctx.respond("Сталася невідома помилка.")
 
 
-if DEBUG_GUILD:
-
-    @bot.slash_command()
-    async def test(ctx, channel: discord.Option(discord.TextChannel)):
-        print(
-            "Test result: ",
-            channel.permissions_for(ctx.me)
-            == (await ctx.guild.fetch_channel(channel.id)).permissions_for(ctx.me),
-        )
-
-
 @bot.slash_command(description="вивести інструкціі")
 async def help(ctx: discord.ApplicationContext):
     embed = discord.Embed(title="Допомога", description="Як користуватися ботом?")
@@ -149,9 +138,6 @@ async def configure(
     ),
 ):
     await ctx.respond("Налаштування...")
-    # fix for pycord permissions issue
-    # https://github.com/Pycord-Development/pycord/issues/1283
-    channel = ctx.guild.get_channel(channel.id)
     if not channel.permissions_for(ctx.guild.me).embed_links:
         await ctx.respond(
             "У бота немає прав писати або вставляти посилання у вказаний канал!"
