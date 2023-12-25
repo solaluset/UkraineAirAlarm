@@ -8,11 +8,8 @@ def _render():
     return get_img()
 
 
-_executor = None
+_executor = ProcessPoolExecutor(1)
 
 
 async def render():
-    global _executor
-    if not _executor:
-        _executor = ProcessPoolExecutor(1)
     return await asyncio.get_running_loop().run_in_executor(_executor, _render)

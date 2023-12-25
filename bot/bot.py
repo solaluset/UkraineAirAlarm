@@ -30,11 +30,11 @@ bot = discord.Bot(debug_guilds=[int(DEBUG_GUILD)] if DEBUG_GUILD else None)
 api = API(getenv("API_KEY"))
 store = db.ConfigStore(getenv("DATABASE_URL"))
 
-REGION_IDS = {}
 try:
     REGION_IDS = api.get_regions()
 except Exception as e:
-    print(e)
+    REGION_IDS = {}
+    logging.error(e)
 REGION_NAMES = {v: k for k, v in REGION_IDS.items()}
 REGION_OPTIONS = tuple(
     discord.OptionChoice(name, id_) for name, id_ in REGION_IDS.items()
@@ -73,19 +73,8 @@ async def on_application_command_error(ctx, exception):
             "Цю команду не можна використовувати в приватних повідомленнях."
         )
     else:
-        print(exception)
+        logging.error(exception)
         await ctx.respond("Сталася невідома помилка.")
-
-
-if DEBUG_GUILD:
-
-    @bot.slash_command()
-    async def test(ctx, channel: discord.Option(discord.TextChannel)):
-        print(
-            "Test result: ",
-            channel.permissions_for(ctx.me)
-            == (await ctx.guild.fetch_channel(channel.id)).permissions_for(ctx.me),
-        )
 
 
 @bot.slash_command(description="вивести інструкціі")
@@ -149,9 +138,6 @@ async def configure(
     ),
 ):
     await ctx.respond("Налаштування...")
-    # fix for pycord permissions issue
-    # https://github.com/Pycord-Development/pycord/issues/1283
-    channel = ctx.guild.get_channel(channel.id)
     if not channel.permissions_for(ctx.guild.me).embed_links:
         await ctx.respond(
             "У бота немає прав писати або вставляти посилання у вказаний канал!"

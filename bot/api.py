@@ -1,3 +1,4 @@
+import logging
 from json import loads
 from typing import Callable, Coroutine
 
@@ -21,11 +22,11 @@ class API:
                 await source.connect()
                 async for message in source:
                     if message.type != "ping":
-                        print(message)
+                        logging.info(message)
                     if message.type == "update":
                         await callback(loads(message.data)["state"])
             except Exception as e:
-                print(e)
+                logging.error(e)
 
     def get_regions(self) -> dict[str, int]:
         return {
