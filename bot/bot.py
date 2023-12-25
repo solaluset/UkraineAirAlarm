@@ -30,11 +30,11 @@ bot = discord.Bot(debug_guilds=[int(DEBUG_GUILD)] if DEBUG_GUILD else None)
 api = API(getenv("API_KEY"))
 store = db.ConfigStore(getenv("DATABASE_URL"))
 
-REGION_IDS = {}
 try:
     REGION_IDS = api.get_regions()
 except Exception as e:
-    print(e)
+    REGION_IDS = {}
+    logging.error(e)
 REGION_NAMES = {v: k for k, v in REGION_IDS.items()}
 REGION_OPTIONS = tuple(
     discord.OptionChoice(name, id_) for name, id_ in REGION_IDS.items()
@@ -73,7 +73,7 @@ async def on_application_command_error(ctx, exception):
             "Цю команду не можна використовувати в приватних повідомленнях."
         )
     else:
-        print(exception)
+        logging.error(exception)
         await ctx.respond("Сталася невідома помилка.")
 
 
