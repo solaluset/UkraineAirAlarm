@@ -18,8 +18,13 @@ FALLBACK_URL = BASE_URL + "/map.png"
 options = Options()
 options.headless = True
 options.add_argument("--disable-dev-shm-usage")
-driver = Chrome(options=options)
-driver.get(URL)
+try:
+    driver = Chrome(options=options)
+except Exception:
+    print_exc()
+    driver = None
+else:
+    driver.get(URL)
 
 _map = None
 
