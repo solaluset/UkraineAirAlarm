@@ -16,7 +16,7 @@ URL = "https://alerts.in.ua/"
 FALLBACK_URL = BASE_URL + "/map.png"
 
 options = Options()
-options.headless = True
+options.add_argument("--headless=new")
 options.add_argument("--disable-dev-shm-usage")
 try:
     driver = Chrome(options=options)
