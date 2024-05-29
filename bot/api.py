@@ -5,7 +5,9 @@ from typing import Callable, Coroutine
 import requests
 from aiohttp_sse_client.client import EventSource
 
-ENDPOINT = "https://alerts.com.ua/api"
+
+BASE_URL = "https://alerts.com.ua"
+ENDPOINT = BASE_URL + "/api"
 
 
 class API:

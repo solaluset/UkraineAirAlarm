@@ -2,20 +2,29 @@ from io import StringIO
 from traceback import print_exc
 from typing import Union, Tuple
 
+import requests
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
+from bot.api import BASE_URL
+
 
 URL = "https://alerts.in.ua/"
+FALLBACK_URL = BASE_URL + "/map.png"
 
 options = Options()
 options.headless = True
 options.add_argument("--disable-dev-shm-usage")
-driver = Chrome(options=options)
-driver.get(URL)
+try:
+    driver = Chrome(options=options)
+except Exception:
+    print_exc()
+    driver = None
+else:
+    driver.get(URL)
 
 _map = None
 
@@ -54,7 +63,12 @@ def get_map(driver: Chrome):
 
 def get_img() -> Union[Tuple[bytes, None], Tuple[None, str]]:
     try:
-        return get_map(driver).screenshot_as_png, None
+        try:
+            return get_map(driver).screenshot_as_png, None
+        except Exception:
+            r = requests.get(FALLBACK_URL)
+            r.raise_for_status()
+            return r.content, None
     except Exception:
         f = StringIO()
         print_exc(file=f)
