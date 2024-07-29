@@ -2,5 +2,5 @@ py-cord==2.6.0
 python-dotenv==1.0.1
 aiohttp-sse-client==0.2.1
 asyncpg==0.29.0
-selenium==4.23.0
+selenium==4.23.1
 requests==2.32.3
