@@ -31,6 +31,7 @@ api = API(getenv("API_KEY"))
 store = db.ConfigStore(getenv("DATABASE_URL"))
 
 try:
+    1 / 0
     REGION_IDS = api.get_regions()
 except Exception as e:
     REGION_IDS = {}
@@ -62,6 +63,24 @@ last_map_time = 0
 @bot.event
 async def on_ready():
     print("Ready")
+
+    for guild in bot.guilds:
+        data = await store.get(guild.id)
+        if not data:
+            continue
+        channel_id = data[0]
+        channel = bot.get_channel(channel_id)
+        if not channel:
+            continue
+        try:
+            await channel.send(
+                f"<@{guild.owner_id}> привіт! На жаль, цей бот не буде продовжувати свою роботу."
+                " Якщо Вам досі потрібні сповіщення про повітряну тривогу, можете використати іншого бота: https://discord.com/application-directory/958711560786812958"
+            )
+        except Exception as e:
+            logging.error(e)
+
+    await bot.close()
 
 
 @bot.event
