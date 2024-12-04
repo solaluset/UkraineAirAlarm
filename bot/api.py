@@ -13,12 +13,11 @@ ENDPOINT = BASE_URL + "/api"
 class API:
     def __init__(self, key):
         self.headers = {"X-API-Key": key}
-        self.source = EventSource(
-            ENDPOINT + "/states/live", headers=self.headers, timeout=0
-        )
 
     async def listen(self, callback: Callable[[dict], Coroutine]):
-        source = self.source
+        source = EventSource(
+            ENDPOINT + "/states/live", headers=self.headers, timeout=0
+        )
         while True:
             try:
                 await source.connect()
